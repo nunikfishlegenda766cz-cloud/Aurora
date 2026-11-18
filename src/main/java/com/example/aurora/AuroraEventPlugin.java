@@ -151,6 +151,3 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         }
     }
 }
-        }
-    }
-}
