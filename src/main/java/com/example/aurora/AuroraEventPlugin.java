@@ -2,7 +2,6 @@ package com.example.aurora;
 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -47,7 +46,7 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         }
 
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.YELLOW + "Použití: /aurora start nebo /aurora stop");
+            sender.sendMessage(ChatColor.YELLOW + "Použití: /aurora start, /aurora stop nebo /aurora spawn");
             return true;
         }
 
@@ -67,8 +66,16 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
             }
             stopAuroraEvent();
             Bukkit.broadcastMessage(ChatColor.GOLD + "✨ Polární záře byla ukončena a na světě se rozednilo!");
+        } else if (action.equals("spawn")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("Tento příkaz může použít jen hráč ve hře.");
+                return true;
+            }
+            Player player = (Player) sender;
+            spawnPolarZombie(player.getLocation());
+            player.sendMessage(ChatColor.GREEN + "❄ Polární Zombie byl úspěšně spawnut u tebe!");
         } else {
-            sender.sendMessage(ChatColor.RED + "Neznámý příkaz. Použij /aurora start nebo /aurora stop.");
+            sender.sendMessage(ChatColor.RED + "Neznámý podpříkaz. Použij /aurora start, stop nebo spawn.");
         }
 
         return true;
@@ -82,34 +89,26 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
             world.setTime(18000); // Půlnoc
         }
 
-        // 1. Efekt duhové polární záře na obloze (opraveno na FIREWORKS_SPARK)
+        // 1. Efekt duhové polární záře na obloze
         effectTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Location loc = player.getLocation().add(0, 16, 0);
-                
                 player.spawnParticle(Particle.FIREWORKS_SPARK, loc, 15, 12, 1, 12, 0.05);
                 player.spawnParticle(Particle.VILLAGER_HAPPY, loc.add(0, 2, 0), 20, 10, 2, 10, 0.02);
                 player.spawnParticle(Particle.END_ROD, loc.add(0, 4, 0), 6, 14, 1, 14, 0.01);
             }
         }, 0L, 25L);
 
-        // 2. Spawn speciálních zombie každých 5 minut (6000 ticků = 5 minut)
+        // 2. Automatický spawn Polárního Zombie každých 5 minut (6000 ticků) u hráčů
         zombieTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Location loc = player.getLocation().add(random.nextInt(6) - 3, 0, random.nextInt(6) - 3);
-                Zombie zombie = player.getWorld().spawn(loc, Zombie.class);
-                zombie.setCustomName(ChatColor.AQUA + "❄ Polární Zombie");
-                zombie.setCustomNameVisible(true);
-                zombie.getEquipment().setHelmet(new ItemStack(Material.DIAMOND_HELMET));
-                if (zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
-                    zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(40.0);
-                }
-                zombie.setHealth(40.0);
-                player.sendMessage(ChatColor.YELLOW + "⚠ Z polární záře se vynořil Polární Zombie!");
+                spawnPolarZombie(loc);
+                player.sendMessage(ChatColor.YELLOW + "⚠ Z polární záře se poblíž vynořil Polární Zombie!");
             }
         }, 0L, 6000L);
 
-        // 3. Automatické ukončení eventu po 30 minutách (36000 ticků)
+        // 3. Ukončení eventu po 30 minutách (36000 ticků)
         mainEventTask = Bukkit.getScheduler().runTaskLater(this, () -> {
             stopAuroraEvent();
             Bukkit.broadcastMessage(ChatColor.GOLD + "✨ Uplynulo 30 minut. Polární záře zmizela a na světě se rozednilo!");
@@ -125,9 +124,23 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         if (mainEventTask != null) mainEventTask.cancel();
 
         for (World world : Bukkit.getWorlds()) {
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true); // Obnoví běh času
+            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
             world.setTime(1000); // Nastaví den
         }
+    }
+
+    // Pomocná metoda pro vytvoření Polárního Zombie
+    private void spawnPolarZombie(Location loc) {
+        Zombie zombie = loc.getWorld().spawn(loc, Zombie.class);
+        zombie.setCustomName(ChatColor.AQUA + "❄ Polární Zombie");
+        zombie.setCustomNameVisible(true);
+        if (zombie.getEquipment() != null) {
+            zombie.getEquipment().setHelmet(new ItemStack(Material.DIAMOND_HELMET));
+        }
+        if (zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+            zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(40.0);
+        }
+        zombie.setHealth(40.0);
     }
 
     // Blokování spawnu mobů na povrchu (Y >= 50), povolení v jeskyních
@@ -144,11 +157,9 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         }
     }
 
-    // Drop 5 náhodných rud po zabití Polárního Zombie
+    // Drop 5 náhodných rud po zabití Polárního Zombie (funguje vždy, i mimo event, pokud je to Polární Zombie)
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        if (!eventActive) return;
-
         if (event.getEntity() instanceof Zombie) {
             Zombie zombie = (Zombie) event.getEntity();
             if (zombie.getCustomName() != null && zombie.getCustomName().contains("Polární")) {
