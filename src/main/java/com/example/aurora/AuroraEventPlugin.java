@@ -64,7 +64,7 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
             world.setTime(18000);
         }
 
-        // 1. Efekt polární záře na obloze (opraveno na VILLAGER_HAPPY)
+        // 1. Efekt polární záře na obloze
         effectTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Location loc = player.getLocation().add(0, 15, 0);
@@ -81,7 +81,9 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
                 zombie.setCustomName(ChatColor.AQUA + "❄ Polární Zombie");
                 zombie.setCustomNameVisible(true);
                 zombie.getEquipment().setHelmet(new ItemStack(Material.DIAMOND_HELMET));
-                zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(40.0);
+                if (zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+                    zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(40.0);
+                }
                 zombie.setHealth(40.0);
                 player.sendMessage(ChatColor.YELLOW + "⚠ V blízkosti se vynořil Polární Zombie!");
             }
