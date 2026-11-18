@@ -60,21 +60,20 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         eventActive = true;
 
         for (World world : Bukkit.getWorlds()) {
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false); // Zastaví změnu času
-            world.setTime(18000); // Nastaví půlnoc
+            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+            world.setTime(18000);
         }
 
-        // 1. Efekt polární záře na obloze (každé 2 sekundy)
+        // 1. Efekt polární záře na obloze (opraveno na VILLAGER_HAPPY)
         effectTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Location loc = player.getLocation().add(0, 15, 0);
-                // Vytvoří barevnou záři nad hlavami hráčů (zelené a modro-fialové particle efekty)
-                player.spawnParticle(Particle.HAPPY_VILLAGER, loc, 25, 10, 2, 10, 0.05);
+                player.spawnParticle(Particle.VILLAGER_HAPPY, loc, 25, 10, 2, 10, 0.05);
                 player.spawnParticle(Particle.END_ROD, loc.add(0, 2, 0), 5, 8, 1, 8, 0.01);
             }
         }, 0L, 40L);
 
-        // 2. Spawn speciálních zombie každých 5 minut (100 ticků = 5 sekund, 6000 ticků = 5 minut)
+        // 2. Spawn speciálních zombie každých 5 minut (6000 ticků = 5 minut)
         zombieTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Location loc = player.getLocation().add(random.nextInt(6) - 3, 0, random.nextInt(6) - 3);
@@ -88,7 +87,7 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
             }
         }, 0L, 6000L);
 
-        // 3. Ukončení eventu po 30 minutách (30 minut = 36000 ticků)
+        // 3. Ukončení eventu po 30 minutách (36000 ticků)
         mainEventTask = Bukkit.getScheduler().runTaskLater(this, () -> {
             stopAuroraEvent();
             Bukkit.broadcastMessage(ChatColor.GOLD + "✨ Polární záře pomalu mizí. Event skončil, čas se opět rozběhl!");
@@ -104,26 +103,25 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         if (mainEventTask != null) mainEventTask.cancel();
 
         for (World world : Bukkit.getWorlds()) {
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true); // Obnoví běh času
+            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
         }
     }
 
-    // Blokování spawnu mobů na povrchu, povolení jen v jeskyních (pod Y < 50)
+    // Blokování spawnu mobů na povrchu (Y >= 50), povolení v jeskyních
     @EventHandler
     public void onEntitySpawn(EntitySpawnEvent event) {
         if (!eventActive) return;
 
         if (event.getEntity() instanceof Monster) {
-            // Pokud to není náš speciální Polární Zombie a spawnul se na povrchu (Y >= 50)
             if (!(event.getEntity() instanceof Zombie && event.getEntity().getCustomName() != null && event.getEntity().getCustomName().contains("Polární"))) {
                 if (event.getLocation().getY() >= 50) {
-                    event.setCancelled(true); // Zruší spawn moba na povrchu
+                    event.setCancelled(true);
                 }
             }
         }
     }
 
-    // Drop 5 náhodných rud (bez netheritu) po zabití Polárního Zombie
+    // Drop 5 náhodných rud po zabití Polárního Zombie
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         if (!eventActive) return;
@@ -131,9 +129,8 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         if (event.getEntity() instanceof Zombie) {
             Zombie zombie = (Zombie) event.getEntity();
             if (zombie.getCustomName() != null && zombie.getCustomName().contains("Polární")) {
-                event.getDrops().clear(); // Vyčistí normální dropy
+                event.getDrops().clear();
 
-                // Vybereme 5 náhodných rud (kromě netheritu)
                 Material[] ores = {
                     Material.DIAMOND,
                     Material.GOLD_INGOT,
@@ -149,6 +146,9 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
                     event.getEntity().getWorld().dropItemNaturally(event.getEntity().getLocation(), new ItemStack(randomOre, 1));
                 }
             }
+        }
+    }
+}
         }
     }
 }
