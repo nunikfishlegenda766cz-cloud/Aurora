@@ -1,9 +1,9 @@
 name: AuroraEventPlugin
-version: 1.1
+version: 1.2
 main: com.example.aurora.AuroraEventPlugin
 api-version: 1.20
 commands:
   aurora:
-    description: Hlavní příkaz pro polární event
+    description: Polární event
     permission: aurora.admin
     usage: /aurora [start|stop|spawn]
