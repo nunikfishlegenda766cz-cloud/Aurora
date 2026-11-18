@@ -82,13 +82,12 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
             world.setTime(18000); // Půlnoc
         }
 
-        // 1. Efekt duhové polární záře na obloze (tvoří barevné čáry a pruhy nad hlavou)
+        // 1. Efekt duhové polární záře na obloze (opraveno na FIREWORKS_SPARK)
         effectTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Location loc = player.getLocation().add(0, 16, 0);
                 
-                // Vytváří duhové světelné stopy (kombinace čar a jiskřivých efektů)
-                player.spawnParticle(Particle.FIREWORK, loc, 15, 12, 1, 12, 0.05);
+                player.spawnParticle(Particle.FIREWORKS_SPARK, loc, 15, 12, 1, 12, 0.05);
                 player.spawnParticle(Particle.VILLAGER_HAPPY, loc.add(0, 2, 0), 20, 10, 2, 10, 0.02);
                 player.spawnParticle(Particle.END_ROD, loc.add(0, 4, 0), 6, 14, 1, 14, 0.01);
             }
@@ -111,7 +110,7 @@ public final class AuroraEventPlugin extends JavaPlugin implements Listener, Com
         }, 0L, 6000L);
 
         // 3. Automatické ukončení eventu po 30 minutách (36000 ticků)
-    mainEventTask = Bukkit.getScheduler().runTaskLater(this, () -> {
+        mainEventTask = Bukkit.getScheduler().runTaskLater(this, () -> {
             stopAuroraEvent();
             Bukkit.broadcastMessage(ChatColor.GOLD + "✨ Uplynulo 30 minut. Polární záře zmizela a na světě se rozednilo!");
         }, 36000L);
