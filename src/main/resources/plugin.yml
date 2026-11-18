@@ -1,0 +1,9 @@
+name: AuroraEventPlugin
+version: 1.0
+main: com.example.aurora.AuroraEventPlugin
+api-version: 1.20
+commands:
+  aurora:
+    description: Spustí 30minutový polární event
+    permission: aurora.admin
+    usage: /aurora
